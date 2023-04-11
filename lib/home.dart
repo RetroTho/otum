@@ -12,6 +12,8 @@ Future<Weather> fetchWeather() async {
       'https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph&precipitation_unit=inch&timeformat=iso8601';
   final response = await http.get(Uri.parse(url));
 
+  debugPrint('API Called');
+
   if (response.statusCode == 200) {
     return Weather.fromJson(jsonDecode(response.body));
   } else {
@@ -63,7 +65,20 @@ class _HomePage extends State<HomePage> {
               return Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('${snapshot.data!.temperature}'),
+                  Text(
+                    '${snapshot.data!.temperature}°',
+                    style: const TextStyle(
+                      fontSize: 50,
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        futureWeather = fetchWeather();
+                      });
+                    },
+                    child: const Text('Refresh'),
+                  )
                 ],
               );
             } else if (snapshot.hasError) {
