@@ -8,7 +8,8 @@ Future<Weather> fetchWeather() async {
   // La Verne, CA (91750) coords (lat,lon): 34.14776,-117.75206
   double lat = 34.14776;
   double lon = -117.75206;
-  String url = 'https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph&precipitation_unit=inch&timeformat=iso8601';
+  String url =
+      'https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph&precipitation_unit=inch&timeformat=iso8601';
   final response = await http.get(Uri.parse(url));
 
   if (response.statusCode == 200) {
@@ -34,7 +35,7 @@ class Weather {
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
-  
+
   @override
   State<StatefulWidget> createState() => _HomePage();
 }
@@ -49,8 +50,11 @@ class _HomePage extends State<HomePage> {
   }
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Otum'),
+      ),
       body: Center(
         child: FutureBuilder<Weather>(
           future: futureWeather,
@@ -62,8 +66,11 @@ class _HomePage extends State<HomePage> {
                   Text('${snapshot.data!.temperature}'),
                 ],
               );
+            } else if (snapshot.hasError) {
+              return Text('${snapshot.error}');
+            } else {
+              return const CircularProgressIndicator();
             }
-            return const CircularProgressIndicator();
           },
         ),
       ),
