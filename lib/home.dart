@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+List<Widget> hourlyTemps = [];
+
 String getDate() {
   DateTime now = DateTime.now();
   String year = now.year.toString();
@@ -43,31 +45,44 @@ String buildURL(String url, Map<String, dynamic> params) {
   return url;
 }
 
+List<Widget> buildHourly(Weather weather) {
+  List<Widget> hourlyWidgets = [];
+  int hours = weather.hourlyTemp.length;
+    debugPrint('HOURS: $hours');
+    for (int i = 0; i < hours; i++) {
+      hourlyWidgets.add(Text('${weather.hourlyTime[i].substring(11)}: ${weather.hourlyTemp[i]}°'));
+    }
+  return hourlyWidgets;
+}
+
 Future<Weather> fetchWeather() async {
   // La Verne, CA (91750) coords (lat,lon): 34.14776,-117.75206
   String url = 'https://api.open-meteo.com/v1/forecast?';
   String date = getDate();
   Map<String, dynamic> params = {
-    'latitude': '34.14776',
-    'longitude': '-117.75206',
+    'latitude': '34.148',
+    'longitude': '-117.752',
     'current_weather': 'true',
     'daily': <String>['temperature_2m_min', 'temperature_2m_max'],
+    'hourly': 'temperature_2m',
     'temperature_unit': 'fahrenheit',
     'windspeed_unit': 'mph',
     'precipitation_unit': 'inch',
     'timeformat': 'iso8601',
     'past_days': '0',
-    'forecast_days': '7',
+    'forecast_days': '3',
     'start_date': date,
     'end_date': date,
-    'timezone': 'GMT',
+    'timezone': 'America%2FLos_Angeles',
   };
 
   final response = await http.get(Uri.parse(buildURL(url, params)));
 
   debugPrint('API Called');
   if (response.statusCode == 200) {
-    return Weather.fromJson(jsonDecode(response.body));
+    Weather result = Weather.fromJson(jsonDecode(response.body));
+    hourlyTemps = buildHourly(result);
+    return result;
   } else {
     throw Exception('Failed to get weather');
   }
@@ -77,11 +92,15 @@ class Weather {
   final double temperature;
   final double dailyMin;
   final double dailyMax;
+  final List hourlyTemp;
+  final List hourlyTime;
 
   const Weather({
     required this.temperature,
     required this.dailyMin,
     required this.dailyMax,
+    required this.hourlyTemp,
+    required this.hourlyTime,
   });
 
   factory Weather.fromJson(Map<String, dynamic> json) {
@@ -89,6 +108,8 @@ class Weather {
       temperature: json['current_weather']['temperature'],
       dailyMin: json['daily']['temperature_2m_min'][0],
       dailyMax: json['daily']['temperature_2m_max'][0],
+      hourlyTemp: json['hourly']['temperature_2m'],
+      hourlyTime: json['hourly']['time'],
     );
   }
 }
@@ -141,9 +162,18 @@ class _HomePage extends State<HomePage> {
                       fontSize: 20,
                     ),
                   ),
+                  SizedBox(
+                    height: 50,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: hourlyTemps,
+                      ),
+                    ),
+                  ),
                   ElevatedButton(
                     onPressed: () {
                       setState(() {
+                        
                         futureWeather = fetchWeather();
                       });
                     },
